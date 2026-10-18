@@ -1,14 +1,14 @@
 #pragma once
 
-#include "Game.h"
+#include "App.h"
 #include "Keyboard.h"
 #include "Net.h"
 #include "UI.h"
 
-// Configuration screen, launched from the menu like a game. For now it sets
+// Configuration screen, launched from the menu like any other app. For now it sets
 // up Wi-Fi: scan, pick a network, type its password; net:: then connects to
 // it at every startup.
-class Settings : public Game {
+class Settings : public App {
 public:
     const char* name() const override { return "Settings"; }
     void drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) override;

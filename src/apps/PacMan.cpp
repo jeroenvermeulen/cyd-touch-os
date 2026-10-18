@@ -1,4 +1,4 @@
-#include "games/PacMan.h"
+#include "apps/PacMan.h"
 
 #include <Arduino.h>
 #include <Preferences.h>
@@ -194,7 +194,7 @@ void drawGhostShape(TFT_eSPI& g, int16_t cx, int16_t cy, uint16_t body, uint8_t 
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// Game interface
+// App interface
 
 void PacMan::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
     // A tiny maze: a corridor all the way round a block, with Blinky chasing

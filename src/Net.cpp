@@ -9,7 +9,7 @@
 
 namespace {
 constexpr const char* PREFS_NS = "wifi";
-constexpr const char* HOSTNAME = "cyd-games";
+constexpr const char* HOSTNAME = "cyd-touch-os";
 constexpr uint32_t RETRY_MS = 30000;  // how often to try again while not connected
 // The core gives up on a scan after 20 x 300 ms, which a full scan on this board
 // can just overrun; wait for the SCAN_DONE event ourselves, a little longer.

@@ -1,4 +1,4 @@
-#include "games/Tetris.h"
+#include "apps/Tetris.h"
 
 #include <Arduino.h>
 #include <Preferences.h>
@@ -89,7 +89,7 @@ int firstRow(uint16_t shape) {
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// Game interface
+// App interface
 
 void Tetris::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
     constexpr int16_t S = 10;

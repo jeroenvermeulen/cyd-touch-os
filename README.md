@@ -1,10 +1,10 @@
-# ESP32 Touch Games
+# CYD Touch OS
 
-A mini game computer for the **ESP32-2432S028R** ("Cheap Yellow Display"): it boots into a menu, and you tap a game to start it.
+A tiny touch-screen OS for the **ESP32-2432S028R** ("Cheap Yellow Display"): it boots into a Program Manager-style menu, and you tap an app (a game, a tool or the settings) to start it.
 
 > **Disclaimer:** This code is fully AI-generated. Review it before you rely on it.
 
-## Games
+## Apps
 
 - **Tic-Tac-Toe**: 1 player vs CPU (Easy / Hard, where Hard is unbeatable) or 2 players on one screen. It keeps score and alternates who goes first.
 - **Crossy Road**: hop across roads, rivers (ride the logs!) and railway tracks. Tap the middle of the screen to hop forward, the left/right edges to hop sideways and the bottom to hop back. The screen scrolls slowly on its own, so don't dawdle. The high score is saved in flash. Tap the pause button (top right) to get back to the menu.
@@ -32,9 +32,9 @@ pio device monitor     # serial log (shows raw touch coordinates)
 - **Colours inverted**: uncomment `-DTFT_INVERSION_ON=1` in `platformio.ini`. Some boards need this, such as the 2-USB variant.
 - **Taps land in the wrong spot**: watch the serial monitor while tapping the corners, then adjust `TOUCH_X_MIN/MAX` and `TOUCH_Y_MIN/MAX` in `include/Config.h`.
 
-## Adding a game
+## Adding an app
 
-1. Create `src/games/MyGame.h/.cpp` with a class that derives from `Game` (see `src/Game.h`).
-2. Add an instance to the `games[]` list in `src/main.cpp`.
+1. Create `src/apps/MyApp.h/.cpp` with a class that derives from `App` (see `src/App.h`).
+2. Add an instance to the `apps[]` list in `src/main.cpp`.
 
-The menu looks like a maximized Windows 3.11 Program Manager: each game is an icon (its `drawIcon()` picture, 64×64 px with no box behind it, with the name underneath), three per row. When they don't all fit, drag up or down or tap the scrollbar arrows to scroll. Set `finished()` to return `true` to go back to the menu.
+The menu looks like a maximized Windows 3.11 Program Manager: each app is an icon (its `drawIcon()` picture, 64×64 px with no box behind it, with the name underneath), three per row. When they don't all fit, drag up or down or tap the scrollbar arrows to scroll. Set `finished()` to return `true` to go back to the menu.

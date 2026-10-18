@@ -6,18 +6,18 @@
 #include "Menu.h"
 #include "Net.h"
 #include "Settings.h"
-#include "games/Clock.h"
-#include "games/CrossyRoad.h"
-#include "games/PacMan.h"
-#include "games/Paint.h"
-#include "games/Snake.h"
-#include "games/Tetris.h"
-#include "games/TicTacToe.h"
+#include "apps/Clock.h"
+#include "apps/CrossyRoad.h"
+#include "apps/PacMan.h"
+#include "apps/Paint.h"
+#include "apps/Snake.h"
+#include "apps/Tetris.h"
+#include "apps/TicTacToe.h"
 
 TFT_eSPI tft;
 Input input;
 
-// --- Game registry: add new games here ---
+// --- App registry: add new apps here ---
 TicTacToe ticTacToe;
 CrossyRoad crossyRoad;
 Paint paint;
@@ -25,11 +25,11 @@ Snake snake;
 Tetris tetris;
 PacMan pacMan;
 Clock clockApp;
-Settings settings;  // not a game, but launched the same way; keep it last
-Game* const games[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris, &pacMan, &clockApp, &settings};
+Settings settings;  // keep it last
+App* const apps[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris, &pacMan, &clockApp, &settings};
 
-Menu menu(games, sizeof(games) / sizeof(games[0]));
-Game* activeGame = nullptr;
+Menu menu(apps, sizeof(apps) / sizeof(apps[0]));
+App* activeApp = nullptr;
 
 void setup() {
     Serial.begin(115200);
@@ -51,17 +51,17 @@ void loop() {
     const TouchEvent ev = input.poll();
     net::loop();
 
-    if (activeGame) {
-        activeGame->update(ev);
-        if (activeGame->finished()) {
-            activeGame = nullptr;
+    if (activeApp) {
+        activeApp->update(ev);
+        if (activeApp->finished()) {
+            activeApp = nullptr;
             menu.draw(tft);
         }
     } else {
         const int selected = menu.update(ev);
         if (selected >= 0) {
-            activeGame = games[selected];
-            activeGame->begin(tft);
+            activeApp = apps[selected];
+            activeApp->begin(tft);
         }
     }
 

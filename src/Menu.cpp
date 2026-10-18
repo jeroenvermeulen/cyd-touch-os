@@ -61,7 +61,7 @@ void Menu::draw(TFT_eSPI& tft) {
         if (!strip_->createSprite(cfg::SCREEN_W, STRIP_H)) Serial.println("Menu: sprite alloc failed");
     }
     if (!iconVersions_) iconVersions_ = new uint32_t[count_];
-    for (int i = 0; i < count_; i++) iconVersions_[i] = games_[i]->iconVersion();
+    for (int i = 0; i < count_; i++) iconVersions_[i] = apps_[i]->iconVersion();
     pressed_ = dragging_ = false;
     selected_ = -1;
     scroll_ = constrain(scroll_, 0, maxScroll());
@@ -70,7 +70,7 @@ void Menu::draw(TFT_eSPI& tft) {
 
 int Menu::update(const TouchEvent& ev) {
     for (int i = 0; i < count_; i++) {
-        const uint32_t v = games_[i]->iconVersion();
+        const uint32_t v = apps_[i]->iconVersion();
         if (v == iconVersions_[i]) continue;
         iconVersions_[i] = v;
         refreshIcon(i);
@@ -107,7 +107,7 @@ int Menu::update(const TouchEvent& ev) {
         if (dragging_) scrollBy(pressScroll_ - (ev.y - pressY_) - scroll_);
     }
 
-    // Launch on release, so that a drag never starts a game.
+    // Launch on release, so that a drag never starts an app.
     if (ev.released) {
         pressed_ = false;
         selected_ = -1;
@@ -162,9 +162,9 @@ void Menu::drawIcon(TFT_eSPI& g, int i, int16_t oy) {
     y += oy;
     const bool sel = i == selected_;
 
-    games_[i]->drawIcon(g, x, y, ICON_W, ICON_H);
+    apps_[i]->drawIcon(g, x, y, ICON_W, ICON_H);
 
-    const char* name = games_[i]->name();
+    const char* name = apps_[i]->name();
     const int16_t cx = x + ICON_W / 2;
     const int16_t ly = y + ICON_H + LABEL_GAP;
     if (sel) {

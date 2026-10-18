@@ -1,4 +1,4 @@
-#include "games/TicTacToe.h"
+#include "apps/TicTacToe.h"
 
 #include <Arduino.h>
 
@@ -37,7 +37,7 @@ int16_t cellCenterY(int cell) { return BOARD_Y + (cell / 3) * CELL + CELL / 2; }
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// Game interface
+// App interface
 
 void TicTacToe::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
     const int16_t s = min(w, h) - 4;  // icon size

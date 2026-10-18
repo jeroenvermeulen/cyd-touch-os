@@ -4,12 +4,12 @@
 
 #include "Input.h"
 
-// Base class for every game shown in the main menu.
+// Base class for every app (game, tool or settings screen) shown in the main menu.
 //
-// To add a game: subclass this, then add an instance to the `games` list in main.cpp.
-class Game {
+// To add an app: subclass this, then add an instance to the `apps` list in main.cpp.
+class App {
 public:
-    virtual ~Game() = default;
+    virtual ~App() = default;
 
     // Name shown on the menu tile.
     virtual const char* name() const = 0;
@@ -23,10 +23,10 @@ public:
     // icon whenever the value changes. Keep it cheap.
     virtual uint32_t iconVersion() const { return 0; }
 
-    // Called when the game is launched from the menu; should draw its first screen.
+    // Called when the app is launched from the menu; should draw its first screen.
     virtual void begin(TFT_eSPI& tft) = 0;
 
-    // Called continuously while the game is active.
+    // Called continuously while the app is active.
     virtual void update(const TouchEvent& ev) = 0;
 
     // Return true to go back to the main menu.

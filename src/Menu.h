@@ -3,24 +3,24 @@
 #include <TFT_eSPI.h>
 
 #include "Config.h"
-#include "Game.h"
+#include "App.h"
 #include "Input.h"
 
 // The home screen, styled as a maximized Windows 3.11 Program Manager: one
-// icon per game in a white window. Drag up/down (or tap the scrollbar
+// icon per app in a white window. Drag up/down (or tap the scrollbar
 // arrows) to scroll when the icons don't all fit; tap an icon to launch it.
 class Menu {
 public:
-    Menu(Game* const* games, int count) : games_(games), count_(count) {}
+    Menu(App* const* apps, int count) : apps_(apps), count_(count) {}
 
     void draw(TFT_eSPI& tft);
 
-    // Returns the index of the tapped game, or -1.
+    // Returns the index of the tapped app, or -1.
     int update(const TouchEvent& ev);
 
 private:
     static constexpr int COLS = 3;
-    static constexpr int16_t ICON_W = 64;   // square box handed to Game::drawIcon()
+    static constexpr int16_t ICON_W = 64;   // square box handed to App::drawIcon()
     static constexpr int16_t ICON_H = 64;
     static constexpr int16_t LABEL_GAP = 3;
     static constexpr int16_t LABEL_H = 16;
@@ -50,11 +50,11 @@ private:
     void drawChrome(TFT_eSPI& g, int16_t oy);
     void scrollBy(int16_t dy);
 
-    Game* const* games_;
+    App* const* apps_;
     int count_;
     TFT_eSPI* tft_ = nullptr;
     TFT_eSprite* strip_ = nullptr;
-    uint32_t* iconVersions_ = nullptr;  // last Game::iconVersion() drawn, per game
+    uint32_t* iconVersions_ = nullptr;  // last App::iconVersion() drawn, per app
 
     int16_t scroll_ = 0;  // pixels scrolled down; kept between visits
     int selected_ = -1;   // icon highlighted under the finger

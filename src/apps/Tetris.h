@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Game.h"
+#include "App.h"
 #include "UI.h"
 
-class Tetris : public Game {
+class Tetris : public App {
 public:
     const char* name() const override { return "Tetris"; }
     void drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) override;

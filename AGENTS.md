@@ -4,7 +4,7 @@ Notes for AI coding agents working on this repo. Read [README.md](README.md) fir
 
 ## Project
 
-Arduino/PlatformIO firmware for the **ESP32-2432S028R** ("Cheap Yellow Display"): a touch-screen menu that launches small games.
+Arduino/PlatformIO firmware for the **ESP32-2432S028R** ("Cheap Yellow Display"): a small touch-screen "OS" (`cyd-touch-os`) whose menu launches apps: games, tools and the settings screen.
 
 - Display: ILI9341, 320×240 landscape (`tft.setRotation(1)`), driven by `TFT_eSPI` on HSPI. All `TFT_eSPI` settings live in `build_flags` in [platformio.ini](platformio.ini); there is no `User_Setup.h`.
 - Touch: XPT2046 resistive panel on its own VSPI bus, read with `XPT2046_Touchscreen`, not with TFT_eSPI's touch support.
@@ -25,26 +25,26 @@ There are no unit tests. `pio run` compiling cleanly is the minimum check. Once 
 | Path | Purpose |
 |---|---|
 | [include/Config.h](include/Config.h) | Pins, screen size, touch calibration (`cfg::`), shared RGB565 palette (`color::`) |
-| [src/main.cpp](src/main.cpp) | `setup()`/`loop()`, game registry (`games[]`), switching between menu and games |
-| [src/Game.h](src/Game.h) | Base class every game implements |
+| [src/main.cpp](src/main.cpp) | `setup()`/`loop()`, app registry (`apps[]`), switching between menu and apps |
+| [src/App.h](src/App.h) | Base class every app implements |
 | [src/Input.h](src/Input.h) / [.cpp](src/Input.cpp) | Touch polling, debouncing, mapping raw values to screen coordinates → `TouchEvent` |
-| [src/Menu.h](src/Menu.h) / [.cpp](src/Menu.cpp) | Home screen styled as a Windows 3.11 Program Manager: game icons three per row (`drawIcon()` gets a 64×64 box and draws straight onto the white `color::ICON_BG`; either draw just the shapes or fill a mini scene); the title and menu bars are decorative; drag or tap the scrollbar arrows to scroll, a tap launches on release |
+| [src/Menu.h](src/Menu.h) / [.cpp](src/Menu.cpp) | Home screen styled as a Windows 3.11 Program Manager: app icons three per row (`drawIcon()` gets a 64×64 box and draws straight onto the white `color::ICON_BG`; either draw just the shapes or fill a mini scene); the title and menu bars are decorative; drag or tap the scrollbar arrows to scroll, a tap launches on release |
 | [src/UI.h](src/UI.h) / [.cpp](src/UI.cpp) | Windows 95-style kit: `Button`, bevels, panels, title bars, windows, `ui::drawDialog`, `ui::drawHeader`, `ui::drawPauseButton` |
 | [src/Keyboard.h](src/Keyboard.h) / [.cpp](src/Keyboard.cpp) | Full-screen on-screen keyboard (`Keyboard::begin()` + `update()` → `Done`/`Cancelled`), edits a caller-owned `char` buffer |
 | [src/Net.h](src/Net.h) / [.cpp](src/Net.cpp) | Wi-Fi: saved credentials (NVS namespace `wifi`), background connect at startup and retries; `net::connected()` for apps that need the network |
-| [src/Settings.h](src/Settings.h) / [.cpp](src/Settings.cpp) | Configuration screen (Wi-Fi scan, password entry). Registered in `games[]` like a game, kept last |
-| [src/games/](src/games/) | One `.h`/`.cpp` pair per game |
+| [src/Settings.h](src/Settings.h) / [.cpp](src/Settings.cpp) | Configuration screen (Wi-Fi scan, password entry). Registered in `apps[]` like any app, kept last |
+| [src/apps/](src/apps/) | One `.h`/`.cpp` pair per app |
 
-## How games work
+## How apps work
 
-- Subclass `Game`: `name()`, optional `drawIcon()`, `begin(tft)`, `update(ev)`, `finished()`. For a live icon, override `iconVersion()`: the menu polls it every loop and redraws that icon when the value changes (Clock returns the current minute).
-- `begin()` is called each time the game is opened from the menu. It must reset `exit_`/state as needed and draw the full first screen. Objects are global and live forever, so state carries over between launches unless you reset it.
+- Subclass `App`: `name()`, optional `drawIcon()`, `begin(tft)`, `update(ev)`, `finished()`. For a live icon, override `iconVersion()`: the menu polls it every loop and redraws that icon when the value changes (Clock returns the current minute).
+- `begin()` is called each time the app is opened from the menu. It must reset `exit_`/state as needed and draw the full first screen. Objects are global and live forever, so state carries over between launches unless you reset it.
 - `update()` is called every `loop()` (about every 2 ms) with a `TouchEvent`:
   - `tapped`: true once per finger-down; use it for buttons.
   - `touching` + `x`/`y`: finger is currently down; use it for dragging/drawing.
   - `released`: true once when the finger is lifted (after the debounce).
 - Return `true` from `finished()` to go back to the menu, which then redraws itself.
-- To register a game, add a global instance and append it to `games[]` in `main.cpp`. The menu scrolls, so there's no fixed limit. `drawIcon()` may be handed a sprite strip instead of the screen, so draw only through its `tft` argument.
+- To register an app, add a global instance and append it to `apps[]` in `main.cpp`. The menu scrolls, so there's no fixed limit. `drawIcon()` may be handed a sprite strip instead of the screen, so draw only through its `tft` argument.
 
 ## Conventions and constraints
 
@@ -59,4 +59,4 @@ There are no unit tests. `pio run` compiling cleanly is the minimum check. Once 
 
 ## Docs
 
-When you add or change a game, update the **Games** section of [README.md](README.md) to match (controls, saving, how to exit).
+When you add or change an app, update the **Apps** section of [README.md](README.md) to match (controls, saving, how to exit).

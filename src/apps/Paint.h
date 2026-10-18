@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Game.h"
+#include "App.h"
 #include "UI.h"
 
 // Finger painting with 16 colours and 4 brush sizes. Pictures are saved to
 // flash (LittleFS) in one of 6 slots.
-class Paint : public Game {
+class Paint : public App {
 public:
     const char* name() const override { return "Paint"; }
     void drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) override;

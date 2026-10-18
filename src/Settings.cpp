@@ -118,7 +118,7 @@ uint16_t iconColor(char c) {
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// Game interface
+// App interface
 
 // One fillRect per run of same-coloured pixels.
 void Settings::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {

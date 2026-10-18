@@ -1,4 +1,4 @@
-#include "games/Clock.h"
+#include "apps/Clock.h"
 
 #include <Arduino.h>
 
@@ -72,7 +72,7 @@ Clock::Hands Clock::handsFor(const struct tm& t) {
 }
 
 // ---------------------------------------------------------------------------
-// Game interface
+// App interface
 
 void Clock::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
     // No hands until the time is known.

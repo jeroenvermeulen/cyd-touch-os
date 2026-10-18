@@ -1,4 +1,4 @@
-#include "games/Paint.h"
+#include "apps/Paint.h"
 
 #include <Arduino.h>
 #include <LittleFS.h>
@@ -94,7 +94,7 @@ void swatchRect(int i, int16_t& x, int16_t& y) {
 }  // namespace
 
 // ---------------------------------------------------------------------------
-// Game interface
+// App interface
 
 void Paint::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
     const int16_t cx = x + w / 2;
