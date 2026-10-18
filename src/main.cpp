@@ -5,6 +5,8 @@
 #include "Input.h"
 #include "Menu.h"
 #include "games/CrossyRoad.h"
+#include "games/Paint.h"
+#include "games/Snake.h"
 #include "games/TicTacToe.h"
 
 TFT_eSPI tft;
@@ -13,7 +15,9 @@ Input input;
 // --- Game registry: add new games here ---
 TicTacToe ticTacToe;
 CrossyRoad crossyRoad;
-Game* const games[] = {&ticTacToe, &crossyRoad};
+Paint paint;
+Snake snake;
+Game* const games[] = {&ticTacToe, &crossyRoad, &paint, &snake};
 
 Menu menu(games, sizeof(games) / sizeof(games[0]));
 Game* activeGame = nullptr;

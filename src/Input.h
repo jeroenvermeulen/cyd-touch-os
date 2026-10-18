@@ -2,9 +2,10 @@
 
 #include <stdint.h>
 
-// A single tap: reported once when the finger goes down.
+// One poll of the touch screen.
 struct TouchEvent {
-    bool tapped = false;
+    bool tapped = false;    // finger just went down (reported once per touch)
+    bool touching = false;  // finger is on the screen; x/y hold its current position
     int16_t x = 0;
     int16_t y = 0;
 };
