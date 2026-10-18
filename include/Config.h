@@ -26,6 +26,11 @@ constexpr int TOUCH_Y_MAX = 3800;
 // time). The clock is set over the internet (NTP) once Wi-Fi connects.
 constexpr const char* TIMEZONE = "CET-1CEST,M3.5.0,M10.5.0/3";
 
+// Location for the Weather app (forecast from open-meteo.com, no API key).
+constexpr const char* WEATHER_PLACE = "Retie, Belgium";
+constexpr float WEATHER_LAT = 51.27f;
+constexpr float WEATHER_LON = 5.08f;
+
 // On-board RGB LED (active low)
 constexpr int LED_R = 4;
 constexpr int LED_G = 16;

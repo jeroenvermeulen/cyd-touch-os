@@ -13,6 +13,7 @@
 #include "apps/Snake.h"
 #include "apps/Tetris.h"
 #include "apps/TicTacToe.h"
+#include "apps/Weather.h"
 
 TFT_eSPI tft;
 Input input;
@@ -25,8 +26,9 @@ Snake snake;
 Tetris tetris;
 PacMan pacMan;
 Clock clockApp;
+Weather weather;
 Settings settings;  // keep it last
-App* const apps[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris, &pacMan, &clockApp, &settings};
+App* const apps[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris, &pacMan, &clockApp, &weather, &settings};
 
 Menu menu(apps, sizeof(apps) / sizeof(apps[0]));
 App* activeApp = nullptr;
