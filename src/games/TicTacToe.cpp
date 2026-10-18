@@ -13,6 +13,8 @@ constexpr int16_t BOARD_SIZE = CELL * 3;
 constexpr int16_t PANEL_X = 230;
 constexpr int16_t PANEL_W = 82;
 constexpr int16_t PANEL_CX = PANEL_X + PANEL_W / 2;
+constexpr int16_t MARK_WELL = 40;  // dark square behind the turn/winner mark
+constexpr int16_t MARK_CY = 32;
 
 constexpr uint32_t CPU_DELAY_MS = 450;  // so the CPU's move doesn't feel instant
 
@@ -25,10 +27,10 @@ constexpr int8_t LINES[8][3] = {
 const Button BTN_EASY{40, 55, 240, 38, "1 Player - Easy"};
 const Button BTN_HARD{40, 100, 240, 38, "1 Player - Hard"};
 const Button BTN_TWO{40, 145, 240, 38, "2 Players"};
-const Button BTN_MENU{40, 192, 240, 38, "< Main Menu", color::BORDER};
+const Button BTN_MENU{40, 192, 240, 38, "< Main Menu"};
 
 const Button BTN_NEW{PANEL_X, 158, PANEL_W, 34, "New"};
-const Button BTN_BACK{PANEL_X, 200, PANEL_W, 34, "Back", color::BORDER};
+const Button BTN_BACK{PANEL_X, 200, PANEL_W, 34, "Back"};
 
 int16_t cellCenterX(int cell) { return BOARD_X + (cell % 3) * CELL + CELL / 2; }
 int16_t cellCenterY(int cell) { return BOARD_Y + (cell / 3) * CELL + CELL / 2; }
@@ -43,13 +45,13 @@ void TicTacToe::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t
     const int16_t ox = x + (w - s) / 2;
     const int16_t oy = y + (h - s) / 2;
     for (int i = 1; i < 3; i++) {
-        tft.drawFastVLine(ox + i * c, oy, s, color::TEXT_DIM);
-        tft.drawFastHLine(ox, oy + i * c, s, color::TEXT_DIM);
+        tft.drawFastVLine(ox + i * c, oy, s, color::EDGE_SHADOW);
+        tft.drawFastHLine(ox, oy + i * c, s, color::EDGE_SHADOW);
     }
     tft_ = &tft;
-    drawMark('X', ox + c / 2, oy + c / 2, c / 3);
-    drawMark('O', ox + c + c / 2, oy + c + c / 2, c / 3);
-    drawMark('X', ox + 2 * c + c / 2, oy + c / 2, c / 3);
+    drawMark('X', ox + c / 2, oy + c / 2, c / 3, color::ICON_BG);
+    drawMark('O', ox + c + c / 2, oy + c + c / 2, c / 3, color::ICON_BG);
+    drawMark('X', ox + 2 * c + c / 2, oy + c / 2, c / 3, color::ICON_BG);
 }
 
 void TicTacToe::begin(TFT_eSPI& tft) {
@@ -107,6 +109,7 @@ void TicTacToe::newRound() {
     if (isCpuTurn()) cpuMoveAt_ = millis() + CPU_DELAY_MS;
 
     tft_->fillScreen(color::BG);
+    ui::drawPanel(*tft_, PANEL_X - 6, 0, cfg::SCREEN_W - PANEL_X + 6, cfg::SCREEN_H);
     drawBoard();
     drawStatus();
     drawScores();
@@ -243,14 +246,15 @@ void TicTacToe::drawBoard() {
     }
 }
 
-void TicTacToe::drawMark(char mark, int16_t cx, int16_t cy, int16_t r) {
+// bg is what's behind the mark: the smooth edges blend into it.
+void TicTacToe::drawMark(char mark, int16_t cx, int16_t cy, int16_t r, uint16_t bg) {
     const float thickness = max(2, r / 3);
     if (mark == 'X') {
-        tft_->drawWideLine(cx - r, cy - r, cx + r, cy + r, thickness, color::PLAYER_X, color::BG);
-        tft_->drawWideLine(cx - r, cy + r, cx + r, cy - r, thickness, color::PLAYER_X, color::BG);
+        tft_->drawWideLine(cx - r, cy - r, cx + r, cy + r, thickness, color::PLAYER_X, bg);
+        tft_->drawWideLine(cx - r, cy + r, cx + r, cy - r, thickness, color::PLAYER_X, bg);
     } else {
-        tft_->fillSmoothCircle(cx, cy, r, color::PLAYER_O, color::BG);
-        tft_->fillSmoothCircle(cx, cy, r - thickness, color::BG, color::PLAYER_O);
+        tft_->fillSmoothCircle(cx, cy, r, color::PLAYER_O, bg);
+        tft_->fillSmoothCircle(cx, cy, r - thickness, bg, color::PLAYER_O);
     }
 }
 
@@ -262,32 +266,37 @@ void TicTacToe::drawWinLine() {
 }
 
 void TicTacToe::drawStatus() {
-    tft_->fillRect(PANEL_X, 10, PANEL_W, 85, color::BG);
+    tft_->fillRect(PANEL_X, 6, PANEL_W, 89, color::FACE);
     tft_->setTextDatum(TC_DATUM);
 
     const char* text;
-    uint16_t textColor = color::TEXT;
+    uint16_t textColor = color::FACE_TEXT;
+    char mark = 0;
     if (!over_) {
-        drawMark(turn_, PANEL_CX, 38, 16);
+        mark = turn_;
         if (mode_ == Mode::TwoPlayer) text = "to move";
         else text = isCpuTurn() ? "thinking..." : "Your turn";
     } else if (winLine_ >= 0) {
-        const char winner = board_[LINES[winLine_][0]];
-        drawMark(winner, PANEL_CX, 38, 16);
-        textColor = color::HIGHLIGHT;
+        mark = board_[LINES[winLine_][0]];
+        textColor = color::TITLE;
         if (mode_ == Mode::TwoPlayer) text = "wins!";
-        else text = (winner == HUMAN) ? "You win!" : "CPU wins";
+        else text = (mark == HUMAN) ? "You win!" : "CPU wins";
     } else {
-        textColor = color::HIGHLIGHT;
-        tft_->setTextColor(textColor, color::BG);
-        tft_->drawString("Draw", PANEL_CX, 25, 4);
+        textColor = color::TITLE;
+        tft_->setTextColor(textColor, color::FACE);
+        tft_->drawString("Draw", PANEL_CX, 20, 4);
         text = "";
     }
-    tft_->setTextColor(textColor, color::BG);
-    tft_->drawString(text, PANEL_CX, 62, 2);
+    if (mark) {
+        ui::drawPanel(*tft_, PANEL_CX - MARK_WELL / 2, MARK_CY - MARK_WELL / 2, MARK_WELL, MARK_WELL,
+                      ui::Bevel::Sunken, color::BG);
+        drawMark(mark, PANEL_CX, MARK_CY, 13);
+    }
+    tft_->setTextColor(textColor, color::FACE);
+    tft_->drawString(text, PANEL_CX, 58, 2);
     if (over_) {
-        tft_->setTextColor(color::TEXT_DIM, color::BG);
-        tft_->drawString("tap board", PANEL_CX, 80, 1);
+        tft_->setTextColor(color::EDGE_SHADOW, color::FACE);
+        tft_->drawString("tap board", PANEL_CX, 78, 1);
     }
 }
 
@@ -299,10 +308,11 @@ void TicTacToe::drawScores() {
     snprintf(buf[2], sizeof(buf[2]), "Draw %d", draws_);
     const uint16_t colors[3] = {color::PLAYER_X, color::PLAYER_O, color::TEXT_DIM};
 
-    tft_->fillRect(PANEL_X, 98, PANEL_W, 56, color::BG);
+    // A dark well keeps the player colours readable on the grey panel.
+    ui::drawPanel(*tft_, PANEL_X, 98, PANEL_W, 58, ui::Bevel::Sunken, color::BG);
     tft_->setTextDatum(TL_DATUM);
     for (int i = 0; i < 3; i++) {
         tft_->setTextColor(colors[i], color::BG);
-        tft_->drawString(buf[i], PANEL_X + 8, 100 + i * 18, 2);
+        tft_->drawString(buf[i], PANEL_X + 8, 101 + i * 18, 2);
     }
 }

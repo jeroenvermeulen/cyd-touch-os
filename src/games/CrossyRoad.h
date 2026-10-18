@@ -45,7 +45,6 @@ private:
     void die(Death how);
     void showPause();
     void showGameOver();
-    void drawOverlayPanel(const char* title);
 
     // World
     Lane& lane(int n) { return lanes_[n % RING]; }

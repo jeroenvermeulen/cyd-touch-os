@@ -60,7 +60,7 @@ constexpr int16_t BACK_ZONE_Y = 190;
 
 const Button BTN_RESUME{75, 140, 80, 36, "Resume"};
 const Button BTN_RETRY{75, 140, 80, 36, "Retry"};
-const Button BTN_MENU{165, 140, 80, 36, "Menu", color::BORDER};
+const Button BTN_MENU{165, 140, 80, 36, "Menu"};
 
 const char* const PREFS_NS = "crossy";
 }  // namespace
@@ -205,21 +205,13 @@ void CrossyRoad::die(Death how) {
     }
 }
 
-void CrossyRoad::drawOverlayPanel(const char* title) {
-    tft_->fillRoundRect(60, 45, 200, 145, 12, color::PANEL);
-    tft_->drawRoundRect(60, 45, 200, 145, 12, color::ACCENT);
-    tft_->setTextDatum(TC_DATUM);
-    tft_->setTextColor(color::ACCENT, color::PANEL);
-    tft_->drawString(title, cfg::SCREEN_W / 2, 58, 4);
-}
-
 void CrossyRoad::showPause() {
     resumeState_ = state_;
     state_ = State::Paused;
-    drawOverlayPanel("Paused");
+    ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 100, 2);
     BTN_RESUME.draw(*tft_);
     BTN_MENU.draw(*tft_);
@@ -227,18 +219,18 @@ void CrossyRoad::showPause() {
 
 void CrossyRoad::showGameOver() {
     state_ = State::GameOver;
-    drawOverlayPanel("Game Over");
+    ui::drawDialog(*tft_, "Game Over");
 
     const char* reason = "Squashed!";
     if (death_ == Death::Drowned) reason = "Splash!";
     else if (death_ == Death::SweptAway) reason = "Swept away!";
     else if (death_ == Death::TooSlow) reason = "Too slow!";
-    tft_->setTextColor(color::HIGHLIGHT, color::PANEL);
+    tft_->setTextColor(color::TITLE, color::FACE);
     tft_->drawString(reason, cfg::SCREEN_W / 2, 90, 2);
 
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 112, 2);
 
     BTN_RETRY.draw(*tft_);
@@ -598,9 +590,7 @@ void CrossyRoad::drawHud(int16_t y0) {
         g.setTextColor(CHICKEN);
         g.drawString(buf, 6, 2, 2);
 
-        g.fillRoundRect(cfg::SCREEN_W - 26, 2, 22, 16, 4, TIRE);
-        g.fillRect(cfg::SCREEN_W - 19, 5, 3, 10, CHICKEN);
-        g.fillRect(cfg::SCREEN_W - 13, 5, 3, 10, CHICKEN);
+        ui::drawPauseButton(g, cfg::SCREEN_W - ui::PAUSE_W - 4, 2);
     }
 
     if (state_ != State::Ready) return;

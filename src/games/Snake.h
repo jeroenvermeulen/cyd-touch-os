@@ -28,7 +28,6 @@ private:
     void placeFood();
     void showPause();
     void showGameOver();
-    void drawOverlayPanel(const char* title);
 
     // Snake body: ring buffer of cell indices (y * COLS + x), plus an
     // occupancy bitmap so collision checks don't have to walk the body.

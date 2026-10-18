@@ -39,7 +39,6 @@ private:
 
     void showPause();
     void showGameOver();
-    void drawOverlayPanel(const char* title);
 
     // Rendering: shown_ mirrors what is on screen so render() only redraws
     // cells that changed.
@@ -49,6 +48,9 @@ private:
     void drawStats();
     void drawNext();
     void drawControls();
+    void drawControl(const Button& b, bool pressed);
+    static const Button* holdButton(Hold h);
+    void setHold(Hold h);  // also redraws the buttons whose pressed state changed
 
     TFT_eSPI* tft_ = nullptr;
     bool exit_ = false;

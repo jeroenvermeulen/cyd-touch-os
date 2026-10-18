@@ -39,13 +39,13 @@ constexpr int16_t SWATCH_W = 24;
 constexpr int16_t SWATCH_H = 20;
 const Button BTN_SIZE{TOOL_X + 2, 162, 44, 24, ""};
 const Button BTN_FILE{TOOL_X + 2, 188, 44, 24, "File"};
-const Button BTN_EXIT{TOOL_X + 2, 214, 44, 24, "Exit", color::BORDER};
+const Button BTN_EXIT{TOOL_X + 2, 214, 44, 24, "Exit"};
 
 // Files screen: 3x2 slot tiles with thumbnails, buttons along the bottom.
 constexpr int16_t SLOT_W = 96;
 constexpr int16_t SLOT_H = 70;
 constexpr int16_t SLOT_GAP = 8;
-constexpr int16_t SLOT_TOP = 48;
+constexpr int16_t SLOT_TOP = 44;
 constexpr int16_t SLOT_LEFT = (cfg::SCREEN_W - 3 * SLOT_W - 2 * SLOT_GAP) / 2;
 constexpr int THUMB_SCALE = 4;
 constexpr int16_t THUMB_W = 272 / THUMB_SCALE;
@@ -55,12 +55,12 @@ constexpr int16_t FBTN_Y = 202;
 constexpr int16_t FBTN_W = 58;
 constexpr int16_t FBTN_H = 34;
 constexpr int16_t fbtnX(int i) { return 7 + i * (FBTN_W + 4); }
-const Button BTN_BACK{fbtnX(4), FBTN_Y, FBTN_W, FBTN_H, "Back", color::BORDER};
+const Button BTN_BACK{fbtnX(4), FBTN_Y, FBTN_W, FBTN_H, "Back"};
 
 // Confirm dialog
 constexpr int16_t DLG_X = 40, DLG_Y = 60, DLG_W = 240, DLG_H = 120;
 const Button BTN_YES{60, 125, 90, 36, "Yes"};
-const Button BTN_NO{170, 125, 90, 36, "No", color::BORDER};
+const Button BTN_NO{170, 125, 90, 36, "No"};
 
 // File format: 4-byte magic, width, height, then the raw 4-bit pixels
 // (two pixels per byte, the left one in the high nibble).
@@ -105,7 +105,7 @@ void Paint::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) 
     tft.fillCircle(cx - 2, cy - 11, 5, PALETTE[6]);
     tft.fillCircle(cx + 13, cy - 7, 5, PALETTE[11]);
     tft.fillCircle(cx + 15, cy + 8, 5, PALETTE[8]);
-    tft.fillCircle(cx - 8, cy + 9, 5, color::PANEL);  // thumb hole
+    tft.fillCircle(cx - 8, cy + 9, 5, color::ICON_BG);  // thumb hole
 }
 
 void Paint::begin(TFT_eSPI& tft) {
@@ -154,23 +154,28 @@ void Paint::showCanvas() {
 }
 
 void Paint::drawToolbar() {
-    tft_->fillRect(TOOL_X, 0, cfg::SCREEN_W - TOOL_X, cfg::SCREEN_H, color::BG);
+    tft_->fillRect(TOOL_X, 0, cfg::SCREEN_W - TOOL_X, cfg::SCREEN_H, color::FACE);
 
+    // Each swatch is a sunken well; the selected one gets a thick black frame.
     for (int i = 0; i < NUM_COLORS; i++) {
         int16_t x, y;
         swatchRect(i, x, y);
-        tft_->fillRect(x + 1, y + 1, SWATCH_W - 2, SWATCH_H - 2, PALETTE[i]);
         if (i == color_) {
-            tft_->drawRect(x, y, SWATCH_W, SWATCH_H, color::HIGHLIGHT);
-            tft_->drawRect(x + 1, y + 1, SWATCH_W - 2, SWATCH_H - 2, color::BG);
+            tft_->drawRect(x, y, SWATCH_W, SWATCH_H, color::FACE_TEXT);
+            tft_->drawRect(x + 1, y + 1, SWATCH_W - 2, SWATCH_H - 2, color::FACE_TEXT);
+        } else {
+            ui::drawBevel(*tft_, x, y, SWATCH_W, SWATCH_H, ui::Bevel::Sunken);
         }
+        tft_->fillRect(x + 2, y + 2, SWATCH_W - 4, SWATCH_H - 4, PALETTE[i]);
     }
 
-    // The size button shows the current brush in the current colour.
+    // The size button shows the current brush in the current colour, outlined
+    // so that white and grey still show up on the button face.
     BTN_SIZE.draw(*tft_);
-    const uint16_t dot = color_ == PAPER ? color::TEXT_DIM : PALETTE[color_];
-    tft_->fillCircle(BTN_SIZE.x + BTN_SIZE.w / 2, BTN_SIZE.y + BTN_SIZE.h / 2, BRUSH_RADIUS[size_],
-                     dot);
+    const int16_t cx = BTN_SIZE.x + BTN_SIZE.w / 2;
+    const int16_t cy = BTN_SIZE.y + BTN_SIZE.h / 2;
+    tft_->fillCircle(cx, cy, BRUSH_RADIUS[size_] + 1, color::FACE_TEXT);
+    tft_->fillCircle(cx, cy, BRUSH_RADIUS[size_], PALETTE[color_]);
 
     BTN_FILE.draw(*tft_);
     BTN_EXIT.draw(*tft_);
@@ -256,19 +261,24 @@ void Paint::drawSlot(int slot) {
     int16_t x, y;
     slotRect(slot, x, y);
     const bool sel = slot == selected_;
-    tft_->fillRoundRect(x, y, SLOT_W, SLOT_H, 8, color::PANEL);
-    tft_->drawRoundRect(x, y, SLOT_W, SLOT_H, 8, sel ? color::HIGHLIGHT : color::BORDER);
-    if (sel) tft_->drawRoundRect(x + 1, y + 1, SLOT_W - 2, SLOT_H - 2, 7, color::HIGHLIGHT);
+    // The selected slot is pushed in and its number highlighted, like a
+    // selected file in a 90s file dialog.
+    ui::drawPanel(*tft_, x, y, SLOT_W, SLOT_H, sel ? ui::Bevel::Sunken : ui::Bevel::Raised);
 
-    tft_->setTextDatum(ML_DATUM);
-    tft_->setTextColor(sel ? color::HIGHLIGHT : color::TEXT_DIM, color::PANEL);
-    tft_->drawNumber(slot + 1, x + 5, y + SLOT_H / 2, 2);
+    constexpr int16_t NUM_W = 16;
+    const int16_t nx = x + 4, ny = y + SLOT_H / 2 - 9;
+    tft_->fillRect(nx, ny, NUM_W, 18, sel ? color::TITLE : color::FACE);
+    tft_->setTextDatum(MC_DATUM);
+    tft_->setTextColor(sel ? color::TITLE_TEXT : color::FACE_TEXT);
+    tft_->drawNumber(slot + 1, nx + NUM_W / 2, y + SLOT_H / 2, 2);
 
-    const int16_t tx = x + SLOT_W - THUMB_W - 8;
+    const int16_t tx = x + SLOT_W - THUMB_W - 6;
     const int16_t ty = y + (SLOT_H - THUMB_H) / 2;
+    ui::drawBevel(*tft_, tx - ui::BEVEL, ty - ui::BEVEL, THUMB_W + 2 * ui::BEVEL, THUMB_H + 2 * ui::BEVEL,
+                  ui::Bevel::Sunken);
     if (!used_[slot]) {
-        tft_->drawRect(tx, ty, THUMB_W, THUMB_H, color::BORDER);
-        tft_->setTextDatum(MC_DATUM);
+        tft_->fillRect(tx, ty, THUMB_W, THUMB_H, color::EDGE_LIGHT);
+        tft_->setTextColor(color::EDGE_SHADOW, color::EDGE_LIGHT);
         tft_->drawString("empty", tx + THUMB_W / 2, ty + THUMB_H / 2, 2);
         return;
     }
@@ -296,19 +306,21 @@ void Paint::drawSlot(int slot) {
 
 void Paint::drawFileButtons() {
     // Load and Delete are greyed out when the selected slot is empty.
-    const uint16_t onEmpty = used_[selected_] ? color::TEXT : color::TEXT_DIM;
+    const bool used = used_[selected_];
     Button{fbtnX(0), FBTN_Y, FBTN_W, FBTN_H, "Save"}.draw(*tft_);
-    Button{fbtnX(1), FBTN_Y, FBTN_W, FBTN_H, "Load", color::PANEL, onEmpty}.draw(*tft_);
-    Button{fbtnX(2), FBTN_Y, FBTN_W, FBTN_H, "Delete", color::PANEL, onEmpty}.draw(*tft_);
+    Button{fbtnX(1), FBTN_Y, FBTN_W, FBTN_H, "Load"}.draw(*tft_, false, used);
+    Button{fbtnX(2), FBTN_Y, FBTN_W, FBTN_H, "Delete"}.draw(*tft_, false, used);
     Button{fbtnX(3), FBTN_Y, FBTN_W, FBTN_H, "New"}.draw(*tft_);
     BTN_BACK.draw(*tft_);
 }
 
 void Paint::drawStatus(const char* msg) {
-    tft_->fillRect(214, 8, 100, 28, color::BG);
+    // Shown on the right of the title bar.
+    constexpr int16_t BAR_Y = ui::BEVEL + 1;
+    tft_->fillRect(200, BAR_Y, cfg::SCREEN_W - 200 - BAR_Y, ui::TITLE_H, color::TITLE);
     tft_->setTextDatum(MR_DATUM);
-    tft_->setTextColor(color::HIGHLIGHT, color::BG);
-    tft_->drawString(msg, cfg::SCREEN_W - 8, 22, 2);
+    tft_->setTextColor(color::HIGHLIGHT, color::TITLE);
+    tft_->drawString(msg, cfg::SCREEN_W - 8, BAR_Y + ui::TITLE_H / 2, 2);
 }
 
 void Paint::updateFiles(const TouchEvent& ev) {
@@ -363,11 +375,9 @@ void Paint::updateFiles(const TouchEvent& ev) {
 void Paint::askConfirm(Pending action, const char* question) {
     screen_ = Screen::Confirm;
     pending_ = action;
-    tft_->fillRoundRect(DLG_X, DLG_Y, DLG_W, DLG_H, 10, color::PANEL);
-    tft_->drawRoundRect(DLG_X, DLG_Y, DLG_W, DLG_H, 10, color::ACCENT);
+    ui::drawWindow(*tft_, DLG_X, DLG_Y, DLG_W, DLG_H, "Paint");
     tft_->setTextDatum(MC_DATUM);
-    tft_->setTextColor(color::TEXT, color::PANEL);
-    tft_->drawString(question, cfg::SCREEN_W / 2, DLG_Y + 30, 2);
+    tft_->drawString(question, cfg::SCREEN_W / 2, DLG_Y + 42, 2);
     BTN_YES.draw(*tft_);
     BTN_NO.draw(*tft_);
 }

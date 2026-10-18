@@ -33,7 +33,7 @@ private:
 
     // Drawing
     void drawBoard();
-    void drawMark(char mark, int16_t cx, int16_t cy, int16_t r);
+    void drawMark(char mark, int16_t cx, int16_t cy, int16_t r, uint16_t bg = color::BG);
     void drawStatus();
     void drawScores();
     void drawWinLine();

@@ -29,7 +29,7 @@ constexpr uint32_t DEATH_MS = 700;
 
 const Button BTN_RESUME{75, 140, 80, 36, "Resume"};
 const Button BTN_RETRY{75, 140, 80, 36, "Retry"};
-const Button BTN_MENU{165, 140, 80, 36, "Menu", color::BORDER};
+const Button BTN_MENU{165, 140, 80, 36, "Menu"};
 
 const char* const PREFS_NS = "snake";
 
@@ -46,17 +46,18 @@ bool inPauseZone(const TouchEvent& ev) { return ev.x >= cfg::SCREEN_W - 40 && ev
 
 void Snake::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
     constexpr int16_t S = 8;
-    // An L-shaped snake heading towards an apple.
-    static const int8_t path[][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {4, 1}, {4, 2}, {5, 2}, {6, 2}};
-    const int16_t ox = x + (w - 10 * S) / 2;
-    const int16_t oy = y + (h - 3 * S) / 2;
+    // A snake winding down towards an apple, on a 6x5 grid.
+    static const int8_t path[][2] = {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {5, 1}, {5, 2}, {4, 2},
+                                     {3, 2}, {2, 2}, {1, 2}, {1, 3}, {1, 4}, {2, 4}, {3, 4}};
+    const int16_t ox = x + (w - 6 * S) / 2;
+    const int16_t oy = y + (h - 5 * S) / 2;
     const int n = sizeof(path) / sizeof(path[0]);
     for (int i = 0; i < n; i++) {
         const uint16_t c = i == n - 1 ? HEAD : BODY;
         tft.fillRoundRect(ox + path[i][0] * S, oy + path[i][1] * S, S - 1, S - 1, 2, c);
     }
-    tft.fillCircle(ox + 9 * S + S / 2, oy + 2 * S + S / 2, 3, FOOD);
-    tft.fillRect(ox + 9 * S + S / 2, oy + 2 * S - 1, 2, 2, LEAF);
+    tft.fillCircle(ox + 5 * S + S / 2, oy + 4 * S + S / 2, 3, FOOD);
+    tft.fillRect(ox + 5 * S + S / 2, oy + 4 * S - 1, 2, 2, LEAF);
 }
 
 void Snake::begin(TFT_eSPI& tft) {
@@ -264,20 +265,12 @@ void Snake::setOccupied(uint16_t c, bool on) {
     else occ_[c >> 3] &= ~(1 << (c & 7));
 }
 
-void Snake::drawOverlayPanel(const char* title) {
-    tft_->fillRoundRect(60, 45, 200, 145, 12, color::PANEL);
-    tft_->drawRoundRect(60, 45, 200, 145, 12, color::ACCENT);
-    tft_->setTextDatum(TC_DATUM);
-    tft_->setTextColor(color::ACCENT, color::PANEL);
-    tft_->drawString(title, cfg::SCREEN_W / 2, 58, 4);
-}
-
 void Snake::showPause() {
     state_ = State::Paused;
-    drawOverlayPanel("Paused");
+    ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 100, 2);
     BTN_RESUME.draw(*tft_);
     BTN_MENU.draw(*tft_);
@@ -285,11 +278,11 @@ void Snake::showPause() {
 
 void Snake::showGameOver() {
     state_ = State::GameOver;
-    drawOverlayPanel(won_ ? "You Win!" : "Game Over");
+    ui::drawDialog(*tft_, won_ ? "You Win!" : "Game Over");
 
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 100, 2);
 
     BTN_RETRY.draw(*tft_);
@@ -308,20 +301,17 @@ void Snake::drawField() {
 }
 
 void Snake::drawHud() {
-    tft_->fillRect(0, 0, cfg::SCREEN_W, HUD_H, color::PANEL);
+    ui::drawPanel(*tft_, 0, 0, cfg::SCREEN_W, HUD_H);
     char buf[16];
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     tft_->setTextDatum(ML_DATUM);
     snprintf(buf, sizeof(buf), "Score %d", score_);
     tft_->drawString(buf, 6, HUD_H / 2, 2);
-    tft_->setTextColor(color::TEXT_DIM, color::PANEL);
     tft_->setTextDatum(MC_DATUM);
     snprintf(buf, sizeof(buf), "Best %d", best_);
     tft_->drawString(buf, cfg::SCREEN_W / 2, HUD_H / 2, 2);
 
-    // Pause button
-    tft_->fillRect(cfg::SCREEN_W - 19, 5, 3, 10, color::TEXT);
-    tft_->fillRect(cfg::SCREEN_W - 13, 5, 3, 10, color::TEXT);
+    ui::drawPauseButton(*tft_, cfg::SCREEN_W - ui::PAUSE_W - 3, (HUD_H - ui::PAUSE_H) / 2);
 }
 
 void Snake::drawHint() {

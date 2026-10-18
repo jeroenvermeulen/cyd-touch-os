@@ -22,6 +22,10 @@ constexpr int TOUCH_X_MAX = 3700;
 constexpr int TOUCH_Y_MIN = 240;
 constexpr int TOUCH_Y_MAX = 3800;
 
+// Local time zone as a POSIX TZ string (here Europe/Amsterdam, with summer
+// time). The clock is set over the internet (NTP) once Wi-Fi connects.
+constexpr const char* TIMEZONE = "CET-1CEST,M3.5.0,M10.5.0/3";
+
 // On-board RGB LED (active low)
 constexpr int LED_R = 4;
 constexpr int LED_G = 16;
@@ -40,4 +44,16 @@ constexpr uint16_t ACCENT = 0x07FF;     // cyan
 constexpr uint16_t HIGHLIGHT = 0xFFE0;  // yellow
 constexpr uint16_t PLAYER_X = 0x061F;   // sky blue
 constexpr uint16_t PLAYER_O = 0xFB08;   // coral
+
+// 90s desktop look (Windows 95 style) for menus, buttons, dialogs and HUDs
+constexpr uint16_t FACE = 0xC618;         // silver window/button face
+constexpr uint16_t FACE_TEXT = 0x0000;    // black text on FACE
+constexpr uint16_t EDGE_LIGHT = 0xFFFF;   // bevel highlight
+constexpr uint16_t EDGE_SOFT = 0xDEFB;    // inner bevel highlight, scrollbar track
+constexpr uint16_t EDGE_SHADOW = 0x8410;  // inner bevel shadow, greyed-out text
+constexpr uint16_t EDGE_DARK = 0x0000;    // outer bevel shadow
+constexpr uint16_t TITLE = 0x0010;        // navy title bar and selection
+constexpr uint16_t TITLE_TEXT = 0xFFFF;
+constexpr uint16_t DESKTOP = 0x0410;      // teal
+constexpr uint16_t ICON_BG = 0xFFFF;      // white window behind the menu icons
 }  // namespace color

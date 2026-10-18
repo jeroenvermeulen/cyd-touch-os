@@ -4,7 +4,11 @@
 #include "Config.h"
 #include "Input.h"
 #include "Menu.h"
+#include "Net.h"
+#include "Settings.h"
+#include "games/Clock.h"
 #include "games/CrossyRoad.h"
+#include "games/PacMan.h"
 #include "games/Paint.h"
 #include "games/Snake.h"
 #include "games/Tetris.h"
@@ -19,7 +23,10 @@ CrossyRoad crossyRoad;
 Paint paint;
 Snake snake;
 Tetris tetris;
-Game* const games[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris};
+PacMan pacMan;
+Clock clockApp;
+Settings settings;  // not a game, but launched the same way; keep it last
+Game* const games[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris, &pacMan, &clockApp, &settings};
 
 Menu menu(games, sizeof(games) / sizeof(games[0]));
 Game* activeGame = nullptr;
@@ -37,10 +44,12 @@ void setup() {
     tft.setRotation(1);  // landscape, USB connector on the right
     input.begin();
     menu.draw(tft);
+    net::begin();  // connects in the background with the saved network
 }
 
 void loop() {
     const TouchEvent ev = input.poll();
+    net::loop();
 
     if (activeGame) {
         activeGame->update(ev);

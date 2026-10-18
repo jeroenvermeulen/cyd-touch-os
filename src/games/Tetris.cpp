@@ -43,6 +43,9 @@ constexpr int16_t BOARD_Y = 10;
 constexpr int16_t BOARD_W = 10 * CELL;  // must match Tetris::COLS
 constexpr int16_t BOARD_H = 20 * CELL;  // must match Tetris::ROWS
 constexpr int16_t RIGHT_X = BOARD_X + BOARD_W + 5;
+constexpr int16_t RIGHT_W = 94;
+constexpr int16_t NEXT_Y = 24;  // sunken preview box under the "Next" label
+constexpr int16_t NEXT_H = 44;
 
 constexpr uint32_t START_FALL_MS = 800;
 constexpr uint32_t MIN_FALL_MS = 50;
@@ -57,12 +60,12 @@ const int LINE_SCORE[] = {0, 100, 300, 500, 800};
 
 const Button BTN_LEFT{4, 120, 45, 112, ""};
 const Button BTN_RIGHT{53, 120, 45, 112, ""};
-const Button BTN_ROTATE{RIGHT_X, 120, 94, 54, ""};
-const Button BTN_DROP{RIGHT_X, 178, 94, 54, ""};
+const Button BTN_ROTATE{RIGHT_X, 120, RIGHT_W, 54, ""};
+const Button BTN_DROP{RIGHT_X, 178, RIGHT_W, 54, ""};
 
 const Button BTN_RESUME{75, 140, 80, 36, "Resume"};
 const Button BTN_RETRY{75, 140, 80, 36, "Retry"};
-const Button BTN_MENU{165, 140, 80, 36, "Menu", color::BORDER};
+const Button BTN_MENU{165, 140, 80, 36, "Menu"};
 
 const char* const PREFS_NS = "tetris";
 
@@ -92,15 +95,17 @@ void Tetris::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h)
     constexpr int16_t S = 10;
     // A T falling onto a small stack ('1'..'7' = piece type + 1).
     static const char* const rows[] = {
-        "..6.....",
-        ".666....",
-        "44.55..1",
-        "445577.1",
+        ".666..",
+        "..6...",
+        ".....1",
+        "4....1",
+        "4..551",
+        "4455.1",
     };
-    const int16_t ox = x + (w - 8 * S) / 2;
-    const int16_t oy = y + (h - 4 * S) / 2;
-    for (int r = 0; r < 4; r++)
-        for (int c = 0; c < 8; c++)
+    const int16_t ox = x + (w - 6 * S) / 2;
+    const int16_t oy = y + (h - 6 * S) / 2;
+    for (int r = 0; r < 6; r++)
+        for (int c = 0; c < 6; c++)
             if (rows[r][c] != '.') drawBlock(tft, ox + c * S, oy + r * S, S, rows[r][c] - '1');
 }
 
@@ -154,7 +159,7 @@ void Tetris::update(const TouchEvent& ev) {
             return;
 
         case State::Clearing:
-            if (ev.released) hold_ = Hold::None;
+            if (ev.released) setHold(Hold::None);
             if ((int32_t)(now - clearAt_) >= 0) finishClear();
             return;
 
@@ -204,24 +209,24 @@ void Tetris::newGame() {
 }
 
 void Tetris::playInput(const TouchEvent& ev, uint32_t now) {
-    if (ev.released) hold_ = Hold::None;
+    if (ev.released) setHold(Hold::None);
 
     if (ev.tapped) {
         if (inPauseZone(ev)) {
             showPause();
         } else if (BTN_LEFT.contains(ev.x, ev.y)) {
             tryMove(-1, 0);
-            hold_ = Hold::Left;
+            setHold(Hold::Left);
             repeatAt_ = now + REPEAT_DELAY_MS;
         } else if (BTN_RIGHT.contains(ev.x, ev.y)) {
             tryMove(1, 0);
-            hold_ = Hold::Right;
+            setHold(Hold::Right);
             repeatAt_ = now + REPEAT_DELAY_MS;
         } else if (BTN_ROTATE.contains(ev.x, ev.y)) {
             tryRotate();
         } else if (BTN_DROP.contains(ev.x, ev.y)) {
             softDrop();
-            hold_ = Hold::Down;
+            setHold(Hold::Down);
             repeatAt_ = now + SOFT_DROP_MS;
         }
         return;
@@ -229,9 +234,8 @@ void Tetris::playInput(const TouchEvent& ev, uint32_t now) {
 
     // Holding left/right/drop keeps moving; sliding off the button stops it.
     if (hold_ != Hold::None && ev.touching && (int32_t)(now - repeatAt_) >= 0) {
-        const Button& b = hold_ == Hold::Left ? BTN_LEFT : hold_ == Hold::Right ? BTN_RIGHT : BTN_DROP;
-        if (!b.contains(ev.x, ev.y)) {
-            hold_ = Hold::None;
+        if (!holdButton(hold_)->contains(ev.x, ev.y)) {
+            setHold(Hold::None);
             return;
         }
         if (hold_ == Hold::Down) {
@@ -414,21 +418,13 @@ uint32_t Tetris::gravityMs() const {
 // ---------------------------------------------------------------------------
 // Overlays
 
-void Tetris::drawOverlayPanel(const char* title) {
-    tft_->fillRoundRect(60, 45, 200, 145, 12, color::PANEL);
-    tft_->drawRoundRect(60, 45, 200, 145, 12, color::ACCENT);
-    tft_->setTextDatum(TC_DATUM);
-    tft_->setTextColor(color::ACCENT, color::PANEL);
-    tft_->drawString(title, cfg::SCREEN_W / 2, 58, 4);
-}
-
 void Tetris::showPause() {
     state_ = State::Paused;
-    hold_ = Hold::None;
-    drawOverlayPanel("Paused");
+    setHold(Hold::None);
+    ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 100, 2);
     BTN_RESUME.draw(*tft_);
     BTN_MENU.draw(*tft_);
@@ -436,12 +432,12 @@ void Tetris::showPause() {
 
 void Tetris::showGameOver() {
     state_ = State::GameOver;
-    drawOverlayPanel("Game Over");
+    ui::drawDialog(*tft_, "Game Over");
     char buf[32];
-    tft_->setTextColor(color::TEXT, color::PANEL);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     snprintf(buf, sizeof(buf), "Score %d   Lines %d", score_, lines_);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 94, 2);
-    tft_->setTextColor(color::TEXT_DIM, color::PANEL);
+    tft_->setTextColor(color::EDGE_SHADOW, color::FACE);
     snprintf(buf, sizeof(buf), "Best %d", best_);
     tft_->drawString(buf, cfg::SCREEN_W / 2, 112, 2);
     BTN_RETRY.draw(*tft_);
@@ -452,8 +448,9 @@ void Tetris::showGameOver() {
 // Rendering
 
 void Tetris::drawScreen() {
-    tft_->fillScreen(color::BG);
-    tft_->drawRect(BOARD_X - 1, BOARD_Y - 1, BOARD_W + 2, BOARD_H + 2, color::BORDER);
+    tft_->fillScreen(color::FACE);
+    ui::drawBevel(*tft_, BOARD_X - ui::BEVEL, BOARD_Y - ui::BEVEL, BOARD_W + 2 * ui::BEVEL,
+                  BOARD_H + 2 * ui::BEVEL, ui::Bevel::Sunken);
     memset(shown_, 0xFF, sizeof(shown_));
     render();
     drawStats();
@@ -509,25 +506,25 @@ void Tetris::drawStats() {
     // the score ticks up during a soft drop.
     tft_->setTextPadding(BOARD_X - 10);
     tft_->setTextDatum(TL_DATUM);
-    tft_->setTextColor(color::TEXT_DIM, color::BG);
+    tft_->setTextColor(color::EDGE_SHADOW, color::FACE);
     tft_->drawString("Score", 8, 8, 2);
-    tft_->setTextColor(color::TEXT, color::BG);
+    tft_->setTextColor(color::FACE_TEXT, color::FACE);
     snprintf(buf, sizeof(buf), "%d", score_);
     tft_->drawString(buf, 8, 24, 4);
     snprintf(buf, sizeof(buf), "Lines %d", lines_);
     tft_->drawString(buf, 8, 58, 2);
     snprintf(buf, sizeof(buf), "Level %d", level_ + 1);
     tft_->drawString(buf, 8, 76, 2);
-    tft_->setTextColor(color::TEXT_DIM, color::BG);
+    tft_->setTextColor(color::EDGE_SHADOW, color::FACE);
     snprintf(buf, sizeof(buf), "Best %d", best_);
     tft_->drawString(buf, 8, 94, 2);
     tft_->setTextPadding(0);
 }
 
 void Tetris::drawNext() {
-    tft_->fillRect(RIGHT_X, 26, cfg::SCREEN_W - RIGHT_X, 60, color::BG);
+    ui::drawPanel(*tft_, RIGHT_X, NEXT_Y, RIGHT_W, NEXT_H, ui::Bevel::Sunken, color::BG);
     tft_->setTextDatum(TL_DATUM);
-    tft_->setTextColor(color::TEXT_DIM, color::BG);
+    tft_->setTextColor(color::EDGE_SHADOW, color::FACE);
     tft_->drawString("Next", RIGHT_X + 4, 8, 2);
 
     // Centre the piece's bounding box in the preview area.
@@ -541,36 +538,55 @@ void Tetris::drawNext() {
                 minC = min(minC, c);
                 maxC = max(maxC, c);
             }
-    const int16_t ox = RIGHT_X + (cfg::SCREEN_W - RIGHT_X - (maxC - minC + 1) * CELL) / 2;
-    const int16_t oy = 34 + (2 * CELL - (maxR - minR + 1) * CELL) / 2;
+    const int16_t ox = RIGHT_X + (RIGHT_W - (maxC - minC + 1) * CELL) / 2;
+    const int16_t oy = NEXT_Y + (NEXT_H - (maxR - minR + 1) * CELL) / 2;
     for (int r = minR; r <= maxR; r++)
         for (int c = minC; c <= maxC; c++)
             if (filled(shape, r, c)) drawBlock(*tft_, ox + (c - minC) * CELL, oy + (r - minR) * CELL, CELL, next_);
 }
 
 void Tetris::drawControls() {
-    for (const Button* b : {&BTN_LEFT, &BTN_RIGHT, &BTN_ROTATE, &BTN_DROP}) b->draw(*tft_);
-    int16_t cy = BTN_LEFT.y + BTN_LEFT.h / 2;
+    for (const Button* b : {&BTN_LEFT, &BTN_RIGHT, &BTN_ROTATE, &BTN_DROP}) drawControl(*b, false);
+    ui::drawPauseButton(*tft_, cfg::SCREEN_W - ui::PAUSE_W - 4, 6);
+}
 
-    int16_t cx = BTN_LEFT.x + BTN_LEFT.w / 2;
-    tft_->fillTriangle(cx - 9, cy, cx + 7, cy - 11, cx + 7, cy + 11, color::TEXT);
-    cx = BTN_RIGHT.x + BTN_RIGHT.w / 2;
-    tft_->fillTriangle(cx + 9, cy, cx - 7, cy - 11, cx - 7, cy + 11, color::TEXT);
+// Held buttons are drawn pushed in, with the glyph shifted along.
+void Tetris::drawControl(const Button& b, bool pressed) {
+    b.draw(*tft_, pressed);
+    const int16_t d = pressed ? 1 : 0;
+    int16_t cx = b.x + b.w / 2 + d;
+    int16_t cy = b.y + b.h / 2 + d;
+    const uint16_t ink = color::FACE_TEXT;
 
-    // Clockwise arrow: a ring with its top-right quarter cut away, ending in
-    // an arrowhead at the top that points right.
-    cx = BTN_ROTATE.x + BTN_ROTATE.w / 2;
-    cy = BTN_ROTATE.y + BTN_ROTATE.h / 2 + 2;
-    tft_->fillCircle(cx, cy, 12, color::TEXT);
-    tft_->fillCircle(cx, cy, 8, BTN_ROTATE.fill);
-    tft_->fillRect(cx + 1, cy - 13, 13, 13, BTN_ROTATE.fill);
-    tft_->fillTriangle(cx + 1, cy - 17, cx + 1, cy - 3, cx + 9, cy - 10, color::TEXT);
+    if (&b == &BTN_LEFT) {
+        tft_->fillTriangle(cx - 9, cy, cx + 7, cy - 11, cx + 7, cy + 11, ink);
+    } else if (&b == &BTN_RIGHT) {
+        tft_->fillTriangle(cx + 9, cy, cx - 7, cy - 11, cx - 7, cy + 11, ink);
+    } else if (&b == &BTN_ROTATE) {
+        // Clockwise arrow: a ring with its top-right quarter cut away, ending in
+        // an arrowhead at the top that points right.
+        cy += 2;
+        tft_->fillCircle(cx, cy, 12, ink);
+        tft_->fillCircle(cx, cy, 8, color::FACE);
+        tft_->fillRect(cx + 1, cy - 13, 13, 13, color::FACE);
+        tft_->fillTriangle(cx + 1, cy - 17, cx + 1, cy - 3, cx + 9, cy - 10, ink);
+    } else {
+        tft_->fillTriangle(cx, cy + 9, cx - 12, cy - 7, cx + 12, cy - 7, ink);
+    }
+}
 
-    cx = BTN_DROP.x + BTN_DROP.w / 2;
-    cy = BTN_DROP.y + BTN_DROP.h / 2;
-    tft_->fillTriangle(cx, cy + 9, cx - 12, cy - 7, cx + 12, cy - 7, color::TEXT);
+const Button* Tetris::holdButton(Hold h) {
+    switch (h) {
+        case Hold::Left: return &BTN_LEFT;
+        case Hold::Right: return &BTN_RIGHT;
+        case Hold::Down: return &BTN_DROP;
+        default: return nullptr;
+    }
+}
 
-    // Pause button
-    tft_->fillRect(cfg::SCREEN_W - 19, 9, 3, 11, color::TEXT);
-    tft_->fillRect(cfg::SCREEN_W - 13, 9, 3, 11, color::TEXT);
+void Tetris::setHold(Hold h) {
+    if (h == hold_) return;
+    if (const Button* b = holdButton(hold_)) drawControl(*b, false);
+    hold_ = h;
+    if (const Button* b = holdButton(hold_)) drawControl(*b, true);
 }
