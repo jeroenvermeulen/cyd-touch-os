@@ -28,7 +28,7 @@ There are no unit tests. `pio run` compiling cleanly is the minimum check. You u
 | [src/main.cpp](src/main.cpp) | `setup()`/`loop()`, game registry (`games[]`), switching between menu and games |
 | [src/Game.h](src/Game.h) | Base class every game implements |
 | [src/Input.h](src/Input.h) / [.cpp](src/Input.cpp) | Touch polling, debouncing, mapping raw values to screen coordinates → `TouchEvent` |
-| [src/Menu.h](src/Menu.h) / [.cpp](src/Menu.cpp) | 2×2 tile menu (max 4 games) |
+| [src/Menu.h](src/Menu.h) / [.cpp](src/Menu.cpp) | Tile menu, two per row; drag to scroll, a tap launches on release |
 | [src/UI.h](src/UI.h) / [.cpp](src/UI.cpp) | `Button` and `ui::drawHeader` helpers |
 | [src/games/](src/games/) | One `.h`/`.cpp` pair per game |
 
@@ -39,8 +39,9 @@ There are no unit tests. `pio run` compiling cleanly is the minimum check. You u
 - `update()` is called every `loop()` (about every 2 ms) with a `TouchEvent`:
   - `tapped`: true once per finger-down; use it for buttons.
   - `touching` + `x`/`y`: finger is currently down; use it for dragging/drawing.
+  - `released`: true once when the finger is lifted (after the debounce).
 - Return `true` from `finished()` to go back to the menu, which then redraws itself.
-- To register a game, add a global instance and append it to `games[]` in `main.cpp`. The menu has room for 4, and all 4 are used today.
+- To register a game, add a global instance and append it to `games[]` in `main.cpp`. The menu scrolls, so there's no fixed limit. `drawIcon()` may be handed a sprite strip instead of the screen, so draw only through its `tft` argument.
 
 ## Conventions and constraints
 

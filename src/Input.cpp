@@ -40,6 +40,7 @@ TouchEvent Input::poll() {
         }
     } else if (down_ && now - lastContactMs_ > RELEASE_MS) {
         down_ = false;
+        ev.released = true;
     }
     return ev;
 }

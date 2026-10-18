@@ -6,6 +6,7 @@
 struct TouchEvent {
     bool tapped = false;    // finger just went down (reported once per touch)
     bool touching = false;  // finger is on the screen; x/y hold its current position
+    bool released = false;  // finger was lifted (reported once per touch, after the debounce)
     int16_t x = 0;
     int16_t y = 0;
 };

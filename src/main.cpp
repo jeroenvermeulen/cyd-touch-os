@@ -7,6 +7,7 @@
 #include "games/CrossyRoad.h"
 #include "games/Paint.h"
 #include "games/Snake.h"
+#include "games/Tetris.h"
 #include "games/TicTacToe.h"
 
 TFT_eSPI tft;
@@ -17,7 +18,8 @@ TicTacToe ticTacToe;
 CrossyRoad crossyRoad;
 Paint paint;
 Snake snake;
-Game* const games[] = {&ticTacToe, &crossyRoad, &paint, &snake};
+Tetris tetris;
+Game* const games[] = {&ticTacToe, &crossyRoad, &paint, &snake, &tetris};
 
 Menu menu(games, sizeof(games) / sizeof(games[0]));
 Game* activeGame = nullptr;
