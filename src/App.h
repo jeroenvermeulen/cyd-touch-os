@@ -31,4 +31,13 @@ public:
 
     // Return true to go back to the main menu.
     virtual bool finished() const = 0;
+
+    // The screensaver wants to take over after cfg::SCREENSAVER_MS without a
+    // touch. Games pause here and return true. Return false to stay on
+    // screen; it's asked again every loop, so a game can also wait for an
+    // animation to end.
+    virtual bool suspend() { return false; }
+
+    // After the screensaver: redraw the whole screen, pause dialog included.
+    virtual void restore() {}
 };

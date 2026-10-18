@@ -29,6 +29,57 @@ constexpr uint8_t PAPER = 0;
 
 constexpr uint8_t BRUSH_RADIUS[4] = {1, 2, 4, 7};
 
+// Menu icon: the Windows 3.1 Paintbrush palette, one char per pixel, drawn at 2x.
+// '.' is left as the white icon background.
+constexpr int16_t ICON_COLS = 32;
+constexpr int16_t ICON_ROWS = 29;
+constexpr int16_t ICON_SCALE = 2;
+const char* const ICON[ICON_ROWS] = {
+    ".......kkkkkkkk.................",
+    ".....kkYYYYYYYYkk...............",
+    "....kYYYYYYYYYYYok...........s..",
+    "...kYYYYYYYYYYYYYok..........ks.",
+    "..kYYYYYYMMMMMYYYYok.........kk.",
+    ".kYYYYYYYMMMMMMYYYYk........dsk.",
+    ".kYYYYYYYYMMMMMMYYYok......dsdk.",
+    ".kYYYYYYYYYYMMMYYYYok......kdkk.",
+    ".kYYYYYYYYYYYYYYYYYok.....kkkk..",
+    "kYYYYGGGYYYYYYYYYYYYok...k.k....",
+    "kYYYGGGGGGYYYYYYYYYYYok.k.k.....",
+    "kYYYGGGGGGGYYYYYYYYYYYok.k......",
+    "kYYYGGGGGGGYYYYYYYYooYkBkk......",
+    "kYYYGGGGGGYYYYYYYYokkkBkYYk.....",
+    "kYYYGGGGGYYYYYYYYok.kBkkYYok....",
+    "kYYYYYYYYYYYYYYYYokkBk.kYYYok...",
+    "kYYYYYYYRRRYYYYYYokBB..kYYYok...",
+    "kYYYYYYRRRRRYYYYYYok..kYYYYYok..",
+    ".kYYYYRRRRRRYYYYYYYkkkYYYYYYok..",
+    ".kYYYYRRRRRRRYYYYYYYYYYYYYYYok..",
+    ".kYYYYYRRRRRRYYYYYYYYYYYYYYYok..",
+    "..kYYYYYRRRYYYYYYBBYYYYYYYYYok..",
+    "..kYYYYYYYYYYYYBBBBBBYYYYYYYok..",
+    "...kYYYYYYYYYYBBBBBBBBYYYYYook..",
+    "....kYYYYYYYYYBBBBBBBYYYYYYok...",
+    ".....kYYYYYYYYYBBBBYYYYYYYok....",
+    ".......kkoYYYYYYYYYYYYoookk.....",
+    ".......kkkkkooooooooookkk.......",
+    "......kk....kkkkkkkkkk..........",
+};
+
+uint16_t iconColor(char c) {
+    switch (c) {
+        case 'Y': return 0xFF6C;  // soft yellow
+        case 's': return 0xC618;  // silver
+        case 'o': return 0x8400;  // olive
+        case 'd': return 0x8410;  // grey
+        case 'M': return 0xF81F;  // magenta
+        case 'R': return 0xF800;  // red
+        case 'G': return 0x07E0;  // green
+        case 'B': return 0x001F;  // blue
+        default: return 0x0000;   // 'k' outline
+    }
+}
+
 // A finger can't really move this far between two polls, so a bigger jump is
 // treated as noise from the resistive panel and not drawn.
 constexpr int16_t MAX_JUMP = 50;
@@ -97,15 +148,16 @@ void swatchRect(int i, int16_t& x, int16_t& y) {
 // App interface
 
 void Paint::drawIcon(TFT_eSPI& tft, int16_t x, int16_t y, int16_t w, int16_t h) {
-    const int16_t cx = x + w / 2;
-    const int16_t cy = y + h / 2;
-    // A little palette with paint blobs and a brush stroke across it.
-    tft.fillEllipse(cx, cy, 30, 20, PALETTE[7]);
-    tft.fillCircle(cx - 16, cy - 6, 5, PALETTE[4]);
-    tft.fillCircle(cx - 2, cy - 11, 5, PALETTE[6]);
-    tft.fillCircle(cx + 13, cy - 7, 5, PALETTE[11]);
-    tft.fillCircle(cx + 15, cy + 8, 5, PALETTE[8]);
-    tft.fillCircle(cx - 8, cy + 9, 5, color::ICON_BG);  // thumb hole
+    const int16_t ox = x + (w - ICON_COLS * ICON_SCALE) / 2;
+    const int16_t oy = y + (h - ICON_ROWS * ICON_SCALE) / 2;
+    for (int16_t row = 0; row < ICON_ROWS; ++row) {
+        for (int16_t col = 0; col < ICON_COLS; ++col) {
+            const char c = ICON[row][col];
+            if (c == '.') continue;
+            tft.fillRect(ox + col * ICON_SCALE, oy + row * ICON_SCALE, ICON_SCALE, ICON_SCALE,
+                         iconColor(c));
+        }
+    }
 }
 
 void Paint::begin(TFT_eSPI& tft) {

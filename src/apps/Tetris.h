@@ -10,6 +10,8 @@ public:
     void begin(TFT_eSPI& tft) override;
     void update(const TouchEvent& ev) override;
     bool finished() const override { return exit_; }
+    bool suspend() override;
+    void restore() override;
 
 private:
     enum class State { Ready, Playing, Clearing, Dying, Paused, GameOver };
@@ -38,6 +40,7 @@ private:
     uint32_t gravityMs() const;
 
     void showPause();
+    void drawPauseDialog();
     void showGameOver();
 
     // Rendering: shown_ mirrors what is on screen so render() only redraws

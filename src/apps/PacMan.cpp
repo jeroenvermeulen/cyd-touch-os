@@ -279,6 +279,19 @@ void PacMan::update(const TouchEvent& ev) {
     render();
 }
 
+// The screensaver pauses the game.
+bool PacMan::suspend() {
+    if (state_ != State::Paused && state_ != State::GameOver) showPause();
+    return true;
+}
+
+// Back from the screensaver: the game as it was, under its dialog.
+void PacMan::restore() {
+    drawAll();
+    if (state_ == State::Paused) drawPauseDialog();
+    else showGameOver();
+}
+
 // ---------------------------------------------------------------------------
 // Game flow
 
@@ -694,6 +707,10 @@ void PacMan::setWant(uint8_t dir) {
 void PacMan::showPause() {
     pausedFrom_ = state_;
     state_ = State::Paused;
+    drawPauseDialog();
+}
+
+void PacMan::drawPauseDialog() {
     ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);

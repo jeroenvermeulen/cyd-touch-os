@@ -145,6 +145,20 @@ void CrossyRoad::update(const TouchEvent& ev) {
     if (state_ == State::Dying && now_ - deathAt_ >= DEATH_MS) showGameOver();
 }
 
+// The screensaver pauses the game; it waits for an animation to finish.
+bool CrossyRoad::suspend() {
+    if (state_ == State::Dying) return false;  // let it finish first
+    if (state_ != State::Paused && state_ != State::GameOver) showPause();
+    return true;
+}
+
+// Back from the screensaver: the game as it was, under its dialog.
+void CrossyRoad::restore() {
+    render();
+    if (state_ == State::Paused) drawPauseDialog();
+    else showGameOver();
+}
+
 // ---------------------------------------------------------------------------
 // Game flow
 
@@ -208,6 +222,10 @@ void CrossyRoad::die(Death how) {
 void CrossyRoad::showPause() {
     resumeState_ = state_;
     state_ = State::Paused;
+    drawPauseDialog();
+}
+
+void CrossyRoad::drawPauseDialog() {
     ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);

@@ -31,6 +31,9 @@ constexpr const char* WEATHER_PLACE = "Retie, Belgium";
 constexpr float WEATHER_LAT = 51.27f;
 constexpr float WEATHER_LON = 5.08f;
 
+// The menu starts the screensaver after this long without a touch.
+constexpr uint32_t SCREENSAVER_MS = 2 * 60 * 1000;
+
 // On-board RGB LED (active low)
 constexpr int LED_R = 4;
 constexpr int LED_G = 16;

@@ -10,6 +10,8 @@ public:
     void begin(TFT_eSPI& tft) override;
     void update(const TouchEvent& ev) override;
     bool finished() const override { return exit_; }
+    bool suspend() override;
+    void restore() override;
 
 private:
     enum class State { Ready, Playing, Dying, LevelClear, Paused, GameOver };
@@ -55,6 +57,7 @@ private:
     void steer(const TouchEvent& ev);
     void setWant(uint8_t dir);
     void showPause();
+    void drawPauseDialog();
     void showGameOver();
 
     // Movement helpers

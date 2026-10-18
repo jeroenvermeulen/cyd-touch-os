@@ -124,6 +124,20 @@ void Snake::update(const TouchEvent& ev) {
     }
 }
 
+// The screensaver pauses the game; it waits for an animation to finish.
+bool Snake::suspend() {
+    if (state_ == State::Dying) return false;  // let it finish first
+    if (state_ != State::Paused && state_ != State::GameOver) showPause();
+    return true;
+}
+
+// Back from the screensaver: the game as it was, under its dialog.
+void Snake::restore() {
+    drawField();
+    if (state_ == State::Paused) drawPauseDialog();
+    else showGameOver();
+}
+
 // ---------------------------------------------------------------------------
 // Game flow
 
@@ -267,6 +281,10 @@ void Snake::setOccupied(uint16_t c, bool on) {
 
 void Snake::showPause() {
     state_ = State::Paused;
+    drawPauseDialog();
+}
+
+void Snake::drawPauseDialog() {
     ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);

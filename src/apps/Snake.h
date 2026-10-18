@@ -10,6 +10,8 @@ public:
     void begin(TFT_eSPI& tft) override;
     void update(const TouchEvent& ev) override;
     bool finished() const override { return exit_; }
+    bool suspend() override;
+    void restore() override;
 
 private:
     enum class State { Ready, Playing, Dying, Paused, GameOver };
@@ -27,6 +29,7 @@ private:
     void die();
     void placeFood();
     void showPause();
+    void drawPauseDialog();
     void showGameOver();
 
     // Snake body: ring buffer of cell indices (y * COLS + x), plus an

@@ -188,6 +188,20 @@ void Tetris::update(const TouchEvent& ev) {
     }
 }
 
+// The screensaver pauses the game; it waits for an animation to finish.
+bool Tetris::suspend() {
+    if (state_ == State::Clearing || state_ == State::Dying) return false;  // let it finish first
+    if (state_ != State::Paused && state_ != State::GameOver) showPause();
+    return true;
+}
+
+// Back from the screensaver: the game as it was, under its dialog.
+void Tetris::restore() {
+    drawScreen();
+    if (state_ == State::Paused) drawPauseDialog();
+    else showGameOver();
+}
+
 // ---------------------------------------------------------------------------
 // Game flow
 
@@ -421,6 +435,10 @@ uint32_t Tetris::gravityMs() const {
 void Tetris::showPause() {
     state_ = State::Paused;
     setHold(Hold::None);
+    drawPauseDialog();
+}
+
+void Tetris::drawPauseDialog() {
     ui::drawDialog(*tft_, "Paused");
     char buf[32];
     snprintf(buf, sizeof(buf), "Score %d   Best %d", score_, best_);
